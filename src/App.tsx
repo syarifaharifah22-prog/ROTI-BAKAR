@@ -22,12 +22,23 @@ export default function App() {
 
   // Fetch initial data from Supabase
   useEffect(() => {
+    let isMounted = true;
+    
+    // Safety timeout: Jika 10 detik tidak konek, anggap offline
+    const timeoutId = setTimeout(() => {
+      if (isMounted && isLoading) {
+        console.warn('Supabase request timed out. Switching to offline mode.');
+        setIsLoading(false);
+      }
+    }, 10000);
+
     async function fetchData() {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-      // If credentials are missing, don't show loading and use local storage
-      if (!supabaseUrl || !supabaseAnonKey || supabaseUrl === 'YOUR_SUPABASE_PROJECT_URL') {
+      // Jika kredensial kosong atau masih placeholder, langsung gunakan storage lokal
+      if (!supabaseUrl || !supabaseAnonKey || supabaseUrl === 'YOUR_SUPABASE_PROJECT_URL' || supabaseUrl === '') {
+        if (!isMounted) return;
         console.warn('Supabase credentials missing. Falling back to local storage.');
         const savedSales = localStorage.getItem('bakery_sales');
         const savedMenu = localStorage.getItem('bakery_menu');
@@ -35,6 +46,7 @@ export default function App() {
         if (savedMenu) setMenuItems(JSON.parse(savedMenu));
         else setMenuItems(MENU_ITEMS);
         setIsLoading(false);
+        clearTimeout(timeoutId);
         return;
       }
 
@@ -70,11 +82,19 @@ export default function App() {
         if (savedMenu) setMenuItems(JSON.parse(savedMenu));
         else setMenuItems(MENU_ITEMS);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+          clearTimeout(timeoutId);
+        }
       }
     }
 
     fetchData();
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const handleSaleComplete = async (sale: Sale) => {
