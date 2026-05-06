@@ -36,8 +36,8 @@ export default function App() {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-      // Jika kredensial kosong atau masih placeholder, langsung gunakan storage lokal
-      if (!supabaseUrl || !supabaseAnonKey || supabaseUrl === 'YOUR_SUPABASE_PROJECT_URL' || supabaseUrl === '') {
+      // Jika kredensial kosong, placeholder, atau client gagal inisialisasi
+      if (!supabase || !supabaseUrl || !supabaseAnonKey || supabaseUrl === 'YOUR_SUPABASE_PROJECT_URL' || supabaseUrl === '') {
         if (!isMounted) return;
         console.warn('Supabase credentials missing. Falling back to local storage.');
         const savedSales = localStorage.getItem('bakery_sales');
@@ -53,6 +53,8 @@ export default function App() {
       try {
         setIsLoading(true);
         
+        if (!supabase) throw new Error('Supabase client not initialized');
+
         // Fetch Sales
         const { data: salesData, error: salesError } = await supabase
           .from('sales')
@@ -104,21 +106,23 @@ export default function App() {
       setView('dashboard');
 
       // Save to Supabase
-      const { error } = await supabase
-        .from('sales')
-        .insert([{
-          id: sale.id,
-          date: sale.date,
-          items: sale.items,
-          total: sale.total,
-          paymentMethod: sale.paymentMethod,
-          transactionCode: sale.transactionCode,
-          status: sale.status
-        }]);
+      if (supabase) {
+        const { error } = await supabase
+          .from('sales')
+          .insert([{
+            id: sale.id,
+            date: sale.date,
+            items: sale.items,
+            total: sale.total,
+            paymentMethod: sale.paymentMethod,
+            transactionCode: sale.transactionCode,
+            status: sale.status
+          }]);
 
-      if (error) {
-        console.error('Supabase Insert Error:', error);
-        throw error;
+        if (error) {
+          console.error('Supabase Insert Error:', error);
+          throw error;
+        }
       }
       
       localStorage.setItem('bakery_sales', JSON.stringify([sale, ...sales]));
@@ -133,11 +137,13 @@ export default function App() {
       setMenuItems(newMenu);
       
       // Upsert menu items to Supabase
-      const { error } = await supabase
-        .from('menu_items')
-        .upsert(newMenu);
+      if (supabase) {
+        const { error } = await supabase
+          .from('menu_items')
+          .upsert(newMenu);
 
-      if (error) throw error;
+        if (error) throw error;
+      }
       
       localStorage.setItem('bakery_menu', JSON.stringify(newMenu));
     } catch (error) {
