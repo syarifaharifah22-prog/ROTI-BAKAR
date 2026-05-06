@@ -137,10 +137,24 @@ export default function App() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-bakery-cream flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 border-4 border-bakery-orange border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-bakery-brown font-display font-black text-xl animate-pulse">Menghubungkan ke Cloud...</p>
+      <div className="min-h-screen bg-bakery-cream flex items-center justify-center p-6">
+        <div className="text-center space-y-6 max-w-sm">
+          <div className="relative">
+            <div className="w-20 h-20 border-4 border-bakery-orange border-t-transparent rounded-full animate-spin mx-auto" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-10 h-10 bg-bakery-warm rounded-full" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-bakery-brown font-display font-black text-2xl animate-pulse">Menghubungkan...</p>
+            <p className="text-bakery-brown-light text-sm">Pastikan Supabase URL & Key sudah benar di menu Settings.</p>
+          </div>
+          <button 
+            onClick={() => setIsLoading(false)}
+            className="px-6 py-3 bg-white border-2 border-bakery-warm text-bakery-brown rounded-2xl font-bold text-sm shadow-sm hover:bg-bakery-warm/20 transition-all"
+          >
+            Gunakan Offline Saja
+          </button>
         </div>
       </div>
     );
