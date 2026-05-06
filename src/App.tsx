@@ -19,6 +19,30 @@ export default function App() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isReportsUnlocked, setIsReportsUnlocked] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passError, setPassError] = useState(false);
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Ganti password sesuai permintaan
+    if (passwordInput === '220602') {
+      setIsReportsUnlocked(true);
+      setPassError(false);
+    } else {
+      setPassError(true);
+      setPasswordInput('');
+    }
+  };
+
+  // Reset lock when leaving reports or menu
+  useEffect(() => {
+    if (view !== 'reports' && view !== 'menu') {
+      setIsReportsUnlocked(false);
+      setPasswordInput('');
+      setPassError(false);
+    }
+  }, [view]);
 
   // Fetch initial data from Supabase
   useEffect(() => {
@@ -157,7 +181,7 @@ export default function App() {
       case 'history': return 'Riwayat Transaksi';
       case 'reports': return 'Laporan Bagi Hasil';
       case 'menu': return 'Kelola Menu';
-      default: return 'Kasir Roti Bakar';
+      default: return 'Rottking';
     }
   };
 
@@ -198,9 +222,89 @@ export default function App() {
           {view === 'dashboard' && <Dashboard setView={setView} />}
           {view === 'sales' && <Sales onComplete={handleSaleComplete} menuItems={menuItems} />}
           {view === 'history' && <History sales={sales} />}
-          {view === 'reports' && <Reports sales={sales} />}
-          {view === 'menu' && <MenuManagement menuItems={menuItems} onUpdateMenu={handleUpdateMenu} />}
+          {view === 'reports' && (
+            isReportsUnlocked ? (
+              <Reports sales={sales} />
+            ) : (
+              <AuthGate 
+                passwordInput={passwordInput} 
+                setPasswordInput={setPasswordInput} 
+                handlePasswordSubmit={handlePasswordSubmit} 
+                passError={passError} 
+                setPassError={setPassError} 
+                title="Laporan Terkunci"
+                subtitle="Masukkan PIN untuk melihat laporan keuangan"
+              />
+            )
+          )}
+          {view === 'menu' && (
+            isReportsUnlocked ? (
+              <MenuManagement menuItems={menuItems} onUpdateMenu={handleUpdateMenu} />
+            ) : (
+              <AuthGate 
+                passwordInput={passwordInput} 
+                setPasswordInput={setPasswordInput} 
+                handlePasswordSubmit={handlePasswordSubmit} 
+                passError={passError} 
+                setPassError={setPassError} 
+                title="Kelola Menu Terkunci"
+                subtitle="Masukkan PIN untuk mengubah menu & harga"
+              />
+            )
+          )}
         </main>
+      </div>
+    </div>
+  );
+}
+
+function AuthGate({ 
+  passwordInput, 
+  setPasswordInput, 
+  handlePasswordSubmit, 
+  passError, 
+  setPassError,
+  title,
+  subtitle
+}: { 
+  passwordInput: string; 
+  setPasswordInput: (v: string) => void; 
+  handlePasswordSubmit: (e: React.FormEvent) => void;
+  passError: boolean;
+  setPassError: (v: boolean) => void;
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <div className="flex-1 flex items-center justify-center p-6 bg-bakery-cream/50 min-h-[400px]">
+      <div className="w-full max-w-xs bg-white p-8 rounded-3xl shadow-xl border-2 border-bakery-warm text-center space-y-6">
+        <div className="w-16 h-16 bg-bakery-orange/10 text-bakery-orange rounded-full flex items-center justify-center mx-auto">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div className="space-y-1">
+          <h3 className="font-display font-black text-bakery-brown text-lg">{title}</h3>
+          <p className="text-[10px] text-bakery-brown-light font-bold uppercase tracking-wider">{subtitle}</p>
+        </div>
+        <form onSubmit={handlePasswordSubmit} className="space-y-4">
+          <input
+            type="password"
+            value={passwordInput}
+            onChange={(e) => {
+              setPasswordInput(e.target.value);
+              if (passError) setPassError(false);
+            }}
+            placeholder="PIN"
+            className={`w-full text-center text-2xl tracking-[0.5em] py-3 rounded-2xl border-2 focus:ring-0 transition-all ${passError ? 'border-red-500 bg-red-50 text-red-500' : 'border-bakery-warm focus:border-bakery-orange text-bakery-brown'}`}
+            autoFocus
+          />
+          {passError && <p className="text-red-500 text-[10px] font-bold">Pin salah, coba lagi.</p>}
+          <button
+            type="submit"
+            className="w-full py-4 bg-bakery-brown text-white rounded-2xl font-bold shadow-lg active:scale-95 transition-all text-sm"
+          >
+            Buka Akses
+          </button>
+        </form>
       </div>
     </div>
   );

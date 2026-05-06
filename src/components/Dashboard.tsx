@@ -102,7 +102,7 @@ export default function Dashboard({ setView }: DashboardProps) {
       
       <div className="mt-8 flex items-center justify-center gap-2 text-xs font-medium text-bakery-brown/40 uppercase tracking-widest">
         <div className="w-8 h-[1px] bg-bakery-brown/20" />
-        <span>Roti Bakar Digital POS</span>
+        <span>Rottking Digital POS</span>
         <div className="w-8 h-[1px] bg-bakery-brown/20" />
       </div>
     </div>
